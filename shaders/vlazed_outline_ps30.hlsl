@@ -22,41 +22,6 @@ float3 decodeNormal(float2 f)
     return normalize(n);
 }
 
-float2 decodeDiamond(float p)
-{
-    float2 v;
-
-    // Remap p to the appropriate segment on the diamond
-    float p_sign = sign(p - 0.5f);
-    v.x = -p_sign * 4.f * p + 1.f + p_sign * 2.f;
-    v.y = p_sign * (1.f - abs(v.x));
-
-    // Normalization extends the point on the diamond back to the unit circle
-    return normalize(v);
-}
-
-float3 decodeTangent(float3 normal, float diamond_tangent)
-{
-    // As in the encode step, find our canonical tangent basis span(t1, t2)
-    float3 t1;
-    if (abs(normal.y) > abs(normal.z))
-    {
-        t1 = float3(normal.y, -normal.x, 0.f);
-    }
-    else
-    {
-        t1 = float3(normal.z, 0.f, -normal.x);
-    }
-    t1 = normalize(t1);
-
-    float3 t2 = cross(t1, normal);
-
-    // Recover the coordinates used with t1 and t2
-    float2 packed_tangent = decodeDiamond(diamond_tangent);
-
-    return packed_tangent.x * t1 + packed_tangent.y * t2;
-}
-
 // Combines the top and bottom colors using normal blending.
 // https://en.wikipedia.org/wiki/Blend_modes#Normal_blend_mode
 // This performs the same operation as Blend SrcAlpha OneMinusSrcAlpha.
@@ -68,12 +33,44 @@ float4 alphaBlend(float4 top, float4 bottom)
     return float4(color, alpha);
 }
 
-float3 getWorldNormal(float2 uv)
+// Edge detection kernel that works by taking the sum of the squares of the differences between diagonally adjacent pixels (Roberts Cross).
+float robertsCross3(float3 samples[4])
+{
+    float3 difference_1 = samples[1] - samples[2];
+    float3 difference_2 = samples[0] - samples[3];
+    return sqrt(dot(difference_1, difference_1) + dot(difference_2, difference_2));
+}
+
+// The same kernel logic as above, but for a single-value instead of a vector3.
+float robertsCross(float samples[4])
+{
+    float difference_1 = samples[1] - samples[2];
+    float difference_2 = samples[0] - samples[3];
+    return sqrt(difference_1 * difference_1 + difference_2 * difference_2);
+}
+
+// Helper function to sample scene luminance.
+float sampleSceneLuminance(float2 uv)
+{
+    float3 color = tex2D(BASETEXTURE, uv).rgb;
+    return color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
+}
+
+float3 sampleWorldNormals(float2 uv)
 {
     float4 normalTangent = tex2D(NORMALTEXTURE, uv);
     float3 worldNormal = decodeNormal(normalTangent.xy);
 
     return worldNormal;
+}
+
+float sampleDepth(float2 uv)
+{
+    float _Gamma = NORMALTHRESHOLD.y;
+    float _Low = NORMALTHRESHOLD.z;
+    float _High = NORMALTHRESHOLD.w;
+
+    return _Low + _High - _Gamma * tex2D(DEPTHTEXTURE, uv).r;
 }
 
 struct PS_INPUT
@@ -89,31 +86,43 @@ float4 main(PS_INPUT frag) : COLOR
     float _DepthNormalThreshold = DEPTHSCALE.z;
     float _DepthNormalThresholdScale = DEPTHSCALE.w;
     float _NormalThreshold = NORMALTHRESHOLD.x;
+    float _LuminanceThreshold = TEXEL.z;
+    float _Debug = TEXEL.w;
 
     float halfScaleFloor = floor(_Scale * 0.5);
     float halfScaleCeil = ceil(_Scale * 0.5);
 
-    // Sample the pixels in an X shape, roughly centered around i.texcoord.
-    // As the _CameraDepthTexture and _CameraNormalsTexture default samplers
-    // use point filtering, we use the above variables to ensure we offset
-    // exactly one pixel at a time.
-    float2 bottomLeftUV = frag.uv - float2(TEXEL.x, TEXEL.y) * halfScaleFloor;
-    float2 topRightUV = frag.uv + float2(TEXEL.x, TEXEL.y) * halfScaleCeil;
-    float2 bottomRightUV = frag.uv + float2(TEXEL.x * halfScaleCeil, -TEXEL.y * halfScaleFloor);
-    float2 topLeftUV = frag.uv + float2(-TEXEL.x * halfScaleFloor, TEXEL.y * halfScaleCeil);
+    float2 texel_size = TEXEL.xy;
 
-    float3 normal0 = getWorldNormal(bottomLeftUV).rgb;
-    float3 normal1 = getWorldNormal(topRightUV).rgb;
-    float3 normal2 = getWorldNormal(bottomRightUV).rgb;
-    float3 normal3 = getWorldNormal(topLeftUV).rgb;
+    float2 uvs[4];
+    uvs[0] = frag.uv + texel_size * float2(halfScaleFloor, halfScaleCeil) * float2(-1, 1);   // top left
+    uvs[1] = frag.uv + texel_size * float2(halfScaleCeil, halfScaleCeil) * float2(1, 1);     // top right
+    uvs[2] = frag.uv + texel_size * float2(halfScaleFloor, halfScaleFloor) * float2(-1, -1); // bottom left
+    uvs[3] = frag.uv + texel_size * float2(halfScaleCeil, halfScaleFloor) * float2(1, -1);   // bottom right
 
-    float depth0 = tex2D(DEPTHTEXTURE, bottomLeftUV).r;
-    float depth1 = tex2D(DEPTHTEXTURE, topRightUV).r;
-    float depth2 = tex2D(DEPTHTEXTURE, bottomRightUV).r;
-    float depth3 = tex2D(DEPTHTEXTURE, topLeftUV).r;
+    float3 normalSamples[4];
+    float depthSamples[4], luminanceSamples[4];
+
+    depthSamples[0] = sampleDepth(uvs[0]);
+    normalSamples[0] = sampleWorldNormals(uvs[0]);
+    luminanceSamples[0] = sampleSceneLuminance(uvs[0]);
+    depthSamples[1] = sampleDepth(uvs[1]);
+    normalSamples[1] = sampleWorldNormals(uvs[1]);
+    luminanceSamples[1] = sampleSceneLuminance(uvs[1]);
+    depthSamples[2] = sampleDepth(uvs[2]);
+    normalSamples[2] = sampleWorldNormals(uvs[2]);
+    luminanceSamples[2] = sampleSceneLuminance(uvs[2]);
+    depthSamples[3] = sampleDepth(uvs[3]);
+    normalSamples[3] = sampleWorldNormals(uvs[3]);
+    luminanceSamples[3] = sampleSceneLuminance(uvs[3]);
+
+    // Apply edge detection kernel on the samples to compute edges.
+    float edgeDepth = robertsCross(depthSamples);
+    float edgeNormal = robertsCross3(normalSamples);
+    float edgeLuminance = robertsCross(luminanceSamples);
 
     // Transform the view normal from the 0...1 range to the -1...1 range.
-    float3 viewNormal = normal0 * 2 - 1;
+    float3 viewNormal = normalSamples[2] * 2 - 1;
     float NdotV = 1 - dot(viewNormal, -frag.view_space_dir);
 
     // Return a value in the 0...1 range depending on where NdotV lies
@@ -125,26 +134,21 @@ float4 main(PS_INPUT frag) : COLOR
     // Modulate the threshold by the existing depth value;
     // pixels further from the screen will require smaller differences
     // to draw an edge.
-    float depthThreshold = _DepthThreshold * depth0 * normalThreshold;
+    float depthThreshold = _DepthThreshold * depthSamples[2] * normalThreshold;
 
-    float depthFiniteDifference0 = depth1 - depth0;
-    float depthFiniteDifference1 = depth3 - depth2;
-    // edgeDepth is calculated using the Roberts cross operator.
-    // The same operation is applied to the normal below.
-    // https://en.wikipedia.org/wiki/Roberts_cross
-    float edgeDepth = sqrt(pow(depthFiniteDifference0, 2) + pow(depthFiniteDifference1, 2)) * 100;
+    // Threshold the edges (discontinuity must be above certain threshold to be counted as an edge). The sensitivities are hardcoded here.
     edgeDepth = edgeDepth > depthThreshold ? 1 : 0;
 
-    float3 normalFiniteDifference0 = normal1 - normal0;
-    float3 normalFiniteDifference1 = normal3 - normal2;
-    // Dot the finite differences with themselves to transform the
-    // three-dimensional values to scalars.
-    float edgeNormal = sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
-    edgeNormal = edgeNormal > _NormalThreshold ? 1 : 0;
+    edgeNormal = edgeNormal > normalThreshold ? 1 : 0;
 
-    float edge = max(edgeDepth, edgeNormal);
+    edgeLuminance = edgeLuminance > _LuminanceThreshold ? 1 : 0;
 
-    float4 color = tex2D(BASETEXTURE, frag.uv);
+    float depth = sampleDepth(frag.uv);
+    // Combine the edges from depth/normals/luminance using the max operator.
+    float edge = max(edgeDepth, max(edgeNormal, edgeLuminance));
+    edge *= depth;
+
+    float4 color = _Debug == 0 ? tex2D(BASETEXTURE, frag.uv) : (float4(1 - COLOR_INPUT.rgb, 1));
     float4 edgeColor = float4(COLOR_INPUT.rgb, COLOR_INPUT.a * edge);
 
     return alphaBlend(edgeColor, color);
