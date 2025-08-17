@@ -117,7 +117,7 @@ float4 main(PS_INPUT frag) : COLOR
     luminanceSamples[3] = sampleSceneLuminance(uvs[3]);
 
     // Apply edge detection kernel on the samples to compute edges.
-    float edgeDepth = robertsCross(depthSamples);
+    float edgeDepth = robertsCross(depthSamples) * 100;
     float edgeNormal = robertsCross3(normalSamples);
     float edgeLuminance = robertsCross(luminanceSamples);
 
@@ -139,7 +139,7 @@ float4 main(PS_INPUT frag) : COLOR
     // Threshold the edges (discontinuity must be above certain threshold to be counted as an edge). The sensitivities are hardcoded here.
     edgeDepth = edgeDepth > depthThreshold ? 1 : 0;
 
-    edgeNormal = edgeNormal > normalThreshold ? 1 : 0;
+    edgeNormal = edgeNormal > _NormalThreshold ? 1 : 0;
 
     edgeLuminance = edgeLuminance > _LuminanceThreshold ? 1 : 0;
 
@@ -148,6 +148,7 @@ float4 main(PS_INPUT frag) : COLOR
     float edge = max(edgeDepth, max(edgeNormal, edgeLuminance));
     edge *= depth;
 
+    // If we're in debug mode, draw the inverted colors of the outline, rather than the framebuffer
     float4 color = _Debug == 0 ? tex2D(BASETEXTURE, frag.uv) : (float4(1 - COLOR_INPUT.rgb, 1));
     float4 edgeColor = float4(COLOR_INPUT.rgb, COLOR_INPUT.a * edge);
 

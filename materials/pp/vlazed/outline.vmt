@@ -4,7 +4,7 @@ screenspace_general
     $vertexshader "vlazed_outline_vs30"
 	$basetexture "_rt_FullFrameFB"
 	$texture1 "_rt_ResolvedFullFrameDepth"
-	$texture2 "_rt_NormalsTangent"
+	$texture2 "_rt_NormalsTangents"
 
     $ignorez 1
 	// $depthtest 1

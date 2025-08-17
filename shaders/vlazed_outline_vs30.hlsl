@@ -32,7 +32,7 @@ VS_OUTPUT main(VS_INPUT vert)
 	VS_OUTPUT output = (VS_OUTPUT)0;
 	output.proj_pos = proj_pos;
 	output.uv = vert.vTexCoord.xy;
-	output.view_space_dir = proj_pos.xyz;
+	output.view_space_dir = mul(cViewProj, float4(vert.vPos.xy, 0.0, 1.0)).xyz;
 
 	return output;
 };
