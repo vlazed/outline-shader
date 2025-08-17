@@ -1,6 +1,6 @@
 # Outline Shader <!-- omit from toc -->
 
-Add customizable cartoony outlines to your scene
+Add customizable cartoony outlines to your GMod scene
 
 ## Table of Contents <!-- omit from toc -->
 
@@ -15,6 +15,8 @@ Add customizable cartoony outlines to your scene
 
 ## Description
 
+[![Preview](https://img.youtube.com/vi/pENsg6CckkU/0.jpg)](https://www.youtube.com/watch?v=pENsg6CckkU)
+
 This adds a shader which outlines the world.
 
 ### Features
@@ -23,9 +25,11 @@ This adds a shader which outlines the world.
 - **Luminance, normal, and depth buffer edge detection**
 - **Debug mode (which can also be used to render an outline pass)** 
 
+See a [comparison!](/COMPARISON.md)
+
 ### Requirements
 
-- [GShader Library](https://steamcommunity.com/sharedfiles/filedetails/?id=3542644649) for the world normal texture
+- [GShader Library](https://steamcommunity.com/sharedfiles/filedetails/?id=3542644649) for _rt_NormalsTangents normal buffer and _rt_ResolvedFullFrameDepth depth buffers. Both are critical in the edge detection algorithm
 
 ### Rational
 
