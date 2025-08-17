@@ -1,0 +1,18 @@
+{
+  "title": "Outline Shader",
+  "type": "effects",
+  "tags": [
+    "cartoon",
+    "comic",
+    "scenic"
+  ],
+  "ignore": [
+    "media/*",
+    "dupes/*",
+    "comparison.md",
+    "*.h",
+    "*.hlsl",
+    "*.exe",
+    "*.bat"
+  ]
+}
