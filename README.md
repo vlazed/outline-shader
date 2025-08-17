@@ -17,7 +17,7 @@ Add customizable cartoony outlines to your GMod scene
 
 [![Preview](https://img.youtube.com/vi/pENsg6CckkU/0.jpg)](https://www.youtube.com/watch?v=pENsg6CckkU)
 
-This adds a shader which outlines the world.
+This adds a shader which outlines the world. You can find this addon in the Post Process Tab > Shaders > Outline (vlazed)
 
 ### Features
 
@@ -30,6 +30,8 @@ See a [comparison!](/COMPARISON.md)
 ### Requirements
 
 - [GShader Library](https://steamcommunity.com/sharedfiles/filedetails/?id=3542644649) for _rt_NormalsTangents normal buffer and _rt_ResolvedFullFrameDepth depth buffers. Both are critical in the edge detection algorithm
+
+Once you subscribe to the above addon, you need to enable it. This is also found in the same location as the Outline shader, as "GShader library".
 
 ### Rational
 

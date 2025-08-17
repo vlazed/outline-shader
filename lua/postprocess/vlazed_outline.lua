@@ -67,11 +67,30 @@ list.Set("PostProcess", "Outline (vlazed)", {
 
 	icon = "gui/postprocess/vlazedoutline.png",
 	convar = "pp_vlazedoutline",
-	category = "#effects_pp",
+	category = "#shaders_pp",
 
 	cpanel = function(CPanel)
 		---@cast CPanel ControlPanel
-		CPanel:Help("Outline")
+
+		CPanel:Help("Draw an outline over the scene. More customization than the Sobel shader!")
+
+		local options = {
+			pp_vlazedoutline_scale = "2",
+			pp_vlazedoutline_depththreshold = "0.2",
+			pp_vlazedoutline_depthnormalthreshold = "0.65",
+			pp_vlazedoutline_depthnormalthresholdscale = "7.0",
+			pp_vlazedoutline_normalthreshold = "1.5",
+			pp_vlazedoutline_luminancethreshold = "2",
+			pp_vlazedoutline_r = "0",
+			pp_vlazedoutline_g = "0",
+			pp_vlazedoutline_b = "0",
+			pp_vlazedoutline_a = "255",
+			pp_vlazedoutline_debug = "0",
+			pp_vlazedoutline_depthgamma = "0.25",
+			pp_vlazedoutline_depthhigh = "1",
+			pp_vlazedoutline_depthlow = "0",
+		}
+		CPanel:ToolPresets("vlazedoutline", options)
 
 		CPanel:ColorPicker(
 			"Color",
