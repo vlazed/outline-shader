@@ -66,14 +66,11 @@ float3 sampleWorldNormals(float2 uv)
 
 float sampleDepth(float2 uv)
 {
-    float _Gamma = NORMALTHRESHOLD.y;
-    float near = NORMALTHRESHOLD.z;
-    float far = NORMALTHRESHOLD.w;
-
     float depth = tex2D(DEPTHTEXTURE, uv).a;
     float z = depth * 2.0 - 1.0; // back to NDC 
 
-    return (2.0 * near * far) / (far + near - z * (far - near));
+    // return depth;
+   return (2.0) / (1 - z * 4000 + 0.01);
 }
 
 struct PS_INPUT
