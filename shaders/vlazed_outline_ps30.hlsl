@@ -70,7 +70,7 @@ float sampleDepth(float2 uv)
     float z = depth * 2.0 - 1.0; // back to NDC 
 
     // return depth;
-   return (2.0) / (1 - z * 4000 + 0.01);
+   return (2.0) / ((1 - z) * 4000 + 0.01);
 }
 
 struct PS_INPUT
