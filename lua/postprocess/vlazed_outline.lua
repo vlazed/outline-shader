@@ -1,6 +1,6 @@
 local mat_outline = Material("pp/vlazed/outline")
 
-local pp_outline = CreateClientConVar("pp_vlazedoutline", "0", false, false, "Enable outlines", 0, 1)
+local pp_outline = CreateClientConVar("pp_vlazedoutline", "0", true, false, "Enable outlines", 0, 1)
 local pp_outlineDepthThreshold = CreateClientConVar("pp_vlazedoutline_depththreshold", "0.1", true, false)
 local pp_outlineScale = CreateClientConVar("pp_vlazedoutline_scale", "1", true, false)
 local pp_outlineDepthNormalThreshold = CreateClientConVar("pp_vlazedoutline_depthnormalthreshold", "1.0", true, false)
@@ -51,7 +51,7 @@ function render.DrawVlazedOutline()
 	-- render.DrawScreenQuad()
 end
 
-cvars.AddChangeCallback("pp_vlazedoutline", function(cvar, old, new)
+local function enableOutlines()
 	if pp_outline:GetBool() then
 		hook.Add("RenderScreenspaceEffects", "vlazed_outline_hook", function()
 			render.DrawVlazedOutline()
@@ -59,7 +59,12 @@ cvars.AddChangeCallback("pp_vlazedoutline", function(cvar, old, new)
 	else
 		hook.Remove("RenderScreenspaceEffects", "vlazed_outline_hook")
 	end
+end
+
+cvars.AddChangeCallback("pp_vlazedoutline", function(cvar, old, new)
+	enableOutlines()
 end, "vlazed_outline_callback")
+enableOutlines()
 
 list.Set("PostProcess", "Outline (vlazed)", {
 
