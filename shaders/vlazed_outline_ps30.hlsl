@@ -67,10 +67,13 @@ float3 sampleWorldNormals(float2 uv)
 float sampleDepth(float2 uv)
 {
     float _Gamma = NORMALTHRESHOLD.y;
-    float _Low = NORMALTHRESHOLD.z;
-    float _High = NORMALTHRESHOLD.w;
+    float near = NORMALTHRESHOLD.z;
+    float far = NORMALTHRESHOLD.w;
 
-    return _Low + _High - _Gamma * tex2D(DEPTHTEXTURE, uv).r;
+    float depth = tex2D(DEPTHTEXTURE, uv).a;
+    float z = depth * 2.0 - 1.0; // back to NDC 
+
+    return (2.0 * near * far) / (far + near - z * (far - near));
 }
 
 struct PS_INPUT
@@ -146,7 +149,7 @@ float4 main(PS_INPUT frag) : COLOR
     float depth = sampleDepth(frag.uv);
     // Combine the edges from depth/normals/luminance using the max operator.
     float edge = max(edgeDepth, max(edgeNormal, edgeLuminance));
-    edge *= depth;
+    // edge *= depth;
 
     // If we're in debug mode, draw the inverted colors of the outline, rather than the framebuffer
     float4 color = _Debug == 0 ? tex2D(BASETEXTURE, frag.uv) : (float4(1 - COLOR_INPUT.rgb, 1));

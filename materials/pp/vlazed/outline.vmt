@@ -3,7 +3,7 @@ screenspace_general
     $pixshader "vlazed_outline_ps30"
     $vertexshader "vlazed_outline_vs30"
 	$basetexture "_rt_FullFrameFB"
-	$texture1 "_rt_ResolvedFullFrameDepth"
+	$texture1 "_rt_WPDepth"
 	$texture2 "_rt_NormalsTangents"
 
     $ignorez 1

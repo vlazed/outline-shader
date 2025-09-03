@@ -1,12 +1,12 @@
 local mat_outline = Material("pp/vlazed/outline")
 
 local pp_outline = CreateClientConVar("pp_vlazedoutline", "0", false, false, "Enable outlines", 0, 1)
-local pp_outlineDepthThreshold = CreateClientConVar("pp_vlazedoutline_depththreshold", "0.2", true, false)
+local pp_outlineDepthThreshold = CreateClientConVar("pp_vlazedoutline_depththreshold", "0.1", true, false)
 local pp_outlineScale = CreateClientConVar("pp_vlazedoutline_scale", "1", true, false)
-local pp_outlineDepthNormalThreshold = CreateClientConVar("pp_vlazedoutline_depthnormalthreshold", "0.5", true, false)
+local pp_outlineDepthNormalThreshold = CreateClientConVar("pp_vlazedoutline_depthnormalthreshold", "1.0", true, false)
 local pp_outlineDepthNormalThresholdScale =
-	CreateClientConVar("pp_vlazedoutline_depthnormalthresholdscale", "7", true, false)
-local pp_outlineNormalThreshold = CreateClientConVar("pp_vlazedoutline_normalthreshold", "0.4", true, false)
+	CreateClientConVar("pp_vlazedoutline_depthnormalthresholdscale", "0.00", true, false)
+local pp_outlineNormalThreshold = CreateClientConVar("pp_vlazedoutline_normalthreshold", "1.59", true, false)
 
 local pp_outlineColorRed = CreateClientConVar("pp_vlazedoutline_r", "0", true, false)
 local pp_outlineColorGreen = CreateClientConVar("pp_vlazedoutline_g", "0", true, false)
@@ -14,9 +14,8 @@ local pp_outlineColorBlue = CreateClientConVar("pp_vlazedoutline_b", "0", true, 
 local pp_outlineColorAlpha = CreateClientConVar("pp_vlazedoutline_a", "255", true, false)
 
 local pp_outlineDebug = CreateClientConVar("pp_vlazedoutline_debug", "0", true, false)
-local pp_outlineDepthGamma = CreateClientConVar("pp_vlazedoutline_depthgamma", "1", true, false)
 local pp_outlineDepthHigh = CreateClientConVar("pp_vlazedoutline_depthhigh", "1", true, false)
-local pp_outlineDepthLow = CreateClientConVar("pp_vlazedoutline_depthlow", "0", true, false)
+local pp_outlineDepthLow = CreateClientConVar("pp_vlazedoutline_depthlow", "0.01", true, false)
 
 local pp_outlineLuminanceThreshold = CreateClientConVar("pp_vlazedoutline_luminancethreshold", "2", true, false)
 
@@ -26,13 +25,12 @@ function render.DrawVlazedOutline()
 	-- TODO: Use local variables
 
 	render.UpdateScreenEffectTexture()
-	mat_outline:SetFloat("$c0_x", pp_outlineDepthNormalThreshold:GetFloat())
+	mat_outline:SetFloat("$c0_z", pp_outlineDepthNormalThreshold:GetFloat())
 	mat_outline:SetFloat("$c0_y", pp_outlineScale:GetInt())
-	mat_outline:SetFloat("$c0_z", pp_outlineDepthThreshold:GetFloat())
+	mat_outline:SetFloat("$c0_x", pp_outlineDepthThreshold:GetFloat())
 	mat_outline:SetFloat("$c0_w", pp_outlineDepthNormalThresholdScale:GetFloat())
 	mat_outline:SetFloat("$c1_x", pp_outlineNormalThreshold:GetFloat())
 
-	mat_outline:SetFloat("$c1_y", pp_outlineDepthGamma:GetFloat())
 	mat_outline:SetFloat("$c1_z", pp_outlineDepthLow:GetFloat())
 	mat_outline:SetFloat("$c1_w", pp_outlineDepthHigh:GetFloat())
 
@@ -76,19 +74,18 @@ list.Set("PostProcess", "Outline (vlazed)", {
 
 		local options = {
 			pp_vlazedoutline_scale = "2",
-			pp_vlazedoutline_depththreshold = "0.2",
-			pp_vlazedoutline_depthnormalthreshold = "0.65",
-			pp_vlazedoutline_depthnormalthresholdscale = "7.0",
-			pp_vlazedoutline_normalthreshold = "1.5",
-			pp_vlazedoutline_luminancethreshold = "2",
+			pp_vlazedoutline_depththreshold = "0.1",
+			pp_vlazedoutline_depthnormalthreshold = "1.0",
+			pp_vlazedoutline_depthnormalthresholdscale = "0.0",
+			pp_vlazedoutline_normalthreshold = "1.59",
+			pp_vlazedoutline_luminancethreshold = "0.85",
 			pp_vlazedoutline_r = "0",
 			pp_vlazedoutline_g = "0",
 			pp_vlazedoutline_b = "0",
 			pp_vlazedoutline_a = "255",
 			pp_vlazedoutline_debug = "0",
-			pp_vlazedoutline_depthgamma = "0.25",
 			pp_vlazedoutline_depthhigh = "1",
-			pp_vlazedoutline_depthlow = "0",
+			pp_vlazedoutline_depthlow = "0.01",
 		}
 		CPanel:ToolPresets("vlazedoutline", options)
 
@@ -110,8 +107,7 @@ list.Set("PostProcess", "Outline (vlazed)", {
 		CPanel:NumSlider("Normal Threshold", "pp_vlazedoutline_normalthreshold", 0, 10)
 		CPanel:NumSlider("Luminance Threshold", "pp_vlazedoutline_luminancethreshold", 0, 10)
 
-		CPanel:NumSlider("Depth Low", "pp_vlazedoutline_depthlow", 0, 10)
-		CPanel:NumSlider("Depth Gamma", "pp_vlazedoutline_depthgamma", 0, 10)
-		CPanel:NumSlider("Depth High", "pp_vlazedoutline_depthhigh", 0, 10)
+		CPanel:NumSlider("Depth Near", "pp_vlazedoutline_depthlow", 0.01, 10)
+		CPanel:NumSlider("Depth Far", "pp_vlazedoutline_depthhigh", 0, 10)
 	end,
 })
